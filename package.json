@@ -1,0 +1,56 @@
+{
+  "name": "dsh-sidebar-sessions",
+  "version": "0.1.0",
+  "description": "Recent-first session sidebar for DeepSeek Harness: user groups, workspace tree, archive bucket, status dots, drag reorder and scheduled-task marks.",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js"
+  },
+  "files": [
+    "lib",
+    "cordis.patch.yml",
+    "README.md",
+    "LICENSE"
+  ],
+  "license": "MIT",
+  "author": "sss-1012",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sss-1012/dsh-sidebar-sessions.git"
+  },
+  "homepage": "https://github.com/sss-1012/dsh-sidebar-sessions#readme",
+  "bugs": {
+    "url": "https://github.com/sss-1012/dsh-sidebar-sessions/issues"
+  },
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "sidebar",
+    "sessions",
+    "workspace",
+    "archive"
+  ],
+  "engines": {
+    "dsh": ">=0.2.1-rc.3 <0.3.0"
+  },
+  "dsh": {
+    "manifestVersion": 1,
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-api-session-controller",
+        "@deepseek-ai/dsh-api-workspace-controller",
+        "@deepseek-ai/dsh-client-connection",
+        "@deepseek-ai/dsh-client-ui-session",
+        "@deepseek-ai/dsh-client-ui-workspace"
+      ]
+    }
+  }
+}

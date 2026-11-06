@@ -1,0 +1,6 @@
+# dsh-sidebar-sessions — client-only bundle registration.
+# All behavior lives in lib/client.js; this row only mounts the package.
+- insert:
+    - id: dsh-sidebar-sessions
+      name: dsh-sidebar-sessions
+      config: {}
