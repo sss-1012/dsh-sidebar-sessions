@@ -18,7 +18,7 @@ DeepSeek Harness 的会话侧边栏增强插件：**最近优先 + 自定义分�
   - 已完成未读 → 绿色圆点
   - 空闲但设置了定时任务 → 线性时钟图标（代替灰点）
   - 空闲 → 灰点
-- **拖动排序**：会话行可拖动，写入宿主 `insertSessionBefore`（持久顺序，刷新保持）。
+- **拖动排序**：会话行可拖动，松手即落到目标位置。工作区树内拖动写入宿主 `insertSessionBefore`（宿主拒绝时退回本地视图顺序）；「最近 / 置顶 / 分组 / 未分组 / 已归档」区的拖动记在视图顺序里（随会话组一起存 localStorage，刷新保持）。「最近」标题上的 ↺ 恢复按活跃时间排序。
 - **行内操作**（悬停「⋯」）：置顶、重命名、分叉、复制 Session ID、复制工作目录、移动到分组、归档。
 
 ## 安装
@@ -41,15 +41,16 @@ dsh plugin --profile web add link:E:\Work\tools\dsh-sidebar-sessions
 
 ```bash
 node --check lib/client.js
+node test/order.test.mjs
 ```
 
 ## 数据与限制
 
-- 分组、折叠状态、隐藏工作区、当前工作区存在浏览器 `localStorage`（key `dsh-session-groups.v1`，兼容早期版本）。
+- 分组、折叠状态、隐藏工作区、当前工作区存在浏览器 `localStorage`（key `dsh-session-groups.v1`，兼容早期版本）；各视图的拖动顺序也存在同一个 key 的 `order` 字段里。
 - 宿主拥有会话、置顶、归档、工作区与宿主顺序的最终状态；插件只做展示与写入调用。
 - **接管式**：`sidebar.workspaces` 是独占插槽，安装后官方 WorkspaceBrowser 不再渲染，其逐项能力由本插件自行实现。
 - 工作区「隐藏」是本地显示开关（DSH 0.2.1 客户端未暴露工作区归档 API），不是官方归档。
-- 拖动排序只支持同一工作区内；跨工作区拖动会被忽略。
+- 工作区树里跨工作区拖动会被忽略（宿主只接受同一工作区内的移动）；平铺区（最近 / 分组等）的拖动只改本视图顺序，不会把会话搬进别的分组或工作区。
 
 ## License
 
