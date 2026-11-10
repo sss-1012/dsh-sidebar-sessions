@@ -25,10 +25,16 @@ DeepSeek Harness 的会话侧边栏增强插件：**最近优先 + 自定义分�
 
 ## 安装
 
-尚未发布到 npm，用 GitHub Release 里的 tarball 安装：
+```bash
+dsh plugin --profile web add dsh-sidebar-sessions
+```
+
+装完重启 `dsh web`（已开着的话按 Ctrl+R 刷新页面）。
+
+不想用 npm 的话，也可以装 GitHub Release 里的 tarball：
 
 ```bash
-dsh plugin --profile web add https://github.com/sss-1012/dsh-sidebar-sessions/releases/download/v0.1.2/dsh-sidebar-sessions-0.1.2.tgz
+dsh plugin --profile web add https://github.com/sss-1012/dsh-sidebar-sessions/releases/download/v0.1.3/dsh-sidebar-sessions-0.1.3.tgz
 ```
 
 装完重启 `dsh web`（已开着的话按 Ctrl+R 刷新页面）。
