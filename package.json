@@ -1,6 +1,6 @@
 {
   "name": "dsh-sidebar-sessions",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Recent-first session sidebar for DeepSeek Harness: user groups, workspace tree, archive bucket, status dots, drag reorder and scheduled-task marks.",
   "type": "module",
   "main": "lib/index.js",
