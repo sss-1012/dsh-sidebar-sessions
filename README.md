@@ -35,7 +35,7 @@ dsh plugin --profile web add dsh-sidebar-sessions
 不想用 npm 的话，也可以装 GitHub Release 里的 tarball：
 
 ```bash
-dsh plugin --profile web add https://github.com/sss-1012/dsh-sidebar-sessions/releases/download/v0.1.3/dsh-sidebar-sessions-0.1.3.tgz
+dsh plugin --profile web add https://github.com/sss-1012/dsh-sidebar-sessions/releases/download/v0.1.6/dsh-sidebar-sessions-0.1.6.tgz
 ```
 
 装完重启 `dsh web`（已开着的话按 Ctrl+R 刷新页面）。
