@@ -2,7 +2,7 @@
 
 DeepSeek Harness 的会话侧边栏增强插件：**最近优先 + 自定义分组 + 工作区树 + 归档 + 状态点 + 拖动排序**。
 
-它接管 Web 端 `sidebar.workspaces` 插槽，把原本按工作区平铺的会话列表换成一条以「最近使用」为先的清单。
+它接管 Web 端（以及桌面端）`sidebar.workspaces` 插槽，把原本按工作区平铺的会话列表换成一条以「最近使用」为先的清单。分组状态自 v0.2.0 起由插件宿主端持有（一份 JSON），Web 与桌面端共用。
 
 > **建议使用暗黑模式（深色主题）以获得最佳体验**：配色全部取自 DSH 主题变量（`--dsw-alias-*`），暗色下状态点、hover 行背景与拖动落点线的对比最清楚；浅色主题同样能用，只是侧栏与主区域的明度差小一些。
 
@@ -12,7 +12,7 @@ DeepSeek Harness 的会话侧边栏增强插件：**最近优先 + 自定义分�
 - **置顶**：手动置顶的会话单独一组。
 - **自定义分组**：新建 / 重命名 / 删除分组，任意会话可移入分组（数据存 localStorage）。**分组优先**（v0.1.6）：已分组的会话只出现在它所属分组里，不再在工作区树重复一份；移出分组后回到工作区树。
 - **工作区树**：📁 工作区节点可折叠，展开列出各工作区；📌 标记当前工作区，点击工作区名即可切换（调用宿主 `openWorkspace`）。
-- **自动分组**（v0.1.6）：命中规则的新会话自动进指定分组，分组不存在则创建。默认规则：含「新闻简报 / 每日简报」→「每日简报」，含「项目数据雷达 / 数据雷达」→「个人开发工具」。判定优先看「该会话是不是某个定时任务刚创建的新会话（`lastDelivery.targetSessionId`，12 小时内）」，其次才看会话标题；一旦自动分过就记进 `autoDone`，你手动挪走后不会被拉回。规则可在 localStorage `dsh-session-groups.v1` 的 `autoRules` 字段改：`[{ groupName, any: [关键词…], none: [排除词…] }]`。
+- **自动归组 + 许可条**（v0.2.0，详见下一节）：命中规则的新会话**先问一句**「建议归入「某组」」，四个选项：是 / 否 / 始终允许该组别 / 让我自己决定；只有选过「始终允许」的组才会以后直接归入、不再打扰。
 - **归档**：已归档会话收进「已归档」分组，可展开查看 / 取消归档。
 - **搜索**：顶部搜索框按标题过滤，`Esc` 清空；匹配多时同样分批，底部提示「还有 N 条匹配」。
 - **状态点**（官方 StateDot 同源数据）：
@@ -24,44 +24,64 @@ DeepSeek Harness 的会话侧边栏增强插件：**最近优先 + 自定义分�
 - **拖动排序**：会话行可拖动。落点在目标行的**上半 → 插到它前面**、**下半 → 插到它后面**（蓝线标出落点），松手即生效；向下拖一格也能直接换位。工作区树内拖动写入宿主 `insertSessionBefore`（宿主拒绝时退回本地视图顺序）；「最近 / 置顶 / 分组 / 未分组 / 已归档」区的拖动记在视图顺序里（随会话组一起存 localStorage，刷新保持）。「最近」标题上的 ↺ 恢复按活跃时间排序。
 - **行内操作**（悬停「⋯」）：置顶、重命名、分叉、复制 Session ID、复制工作目录、移动到分组、归档。
 
+## 自动归组（v0.2.0）
+
+点侧栏顶部的「⚙ 自动归组」打开规则面板。
+
+- **规则两种触发**：① 绑定定时任务（按任务 id，不靠标题猜：勾一条任务就够）；② 关键词（逗号分隔，另可用 `none` 排除词）。**定时任务绑定优先于关键词**；同一条定时任务只允许一条规则，重新绑定会替换旧的。
+- **判定时机**：侧栏每次把「会话 + 定时任务投递记录」快照交给宿主，宿主统一判定（规则命中 → 待确认；模型兜底 → 待确认）。不在侧栏里判定，所以网页端和桌面端永远同一套结果。
+- **只问新会话**：只看 48 小时内创建的会话，升级那天不会把历史会话全翻出来问你一遍；定时任务投递只认 24 小时内的记录。
+- **许可条的四个选项**：
+  - **是** → 归入该组（以后这个会话不再问）。
+  - **否** → 不归入，记下「已拒绝」，不再问这个会话。
+  - **始终允许该组别** → 归入 + 把该组加入白名单，以后同组建议**直接生效**。白名单在规则面板里可撤销。
+  - **让我自己决定** → 弹出分组选择器，手选一个（或「未分组」/「新建分组」），不再追问。
+- **模型兜底**：默认关闭。规则没命中时可让宿主调一次模型判断（规则面板里选提供方 + 模型后保存）。每次最多 3 个新会话、同一轮 20 秒冷却；模型给的结果同样只是建议，仍要你点许可条。
+- **agent 参与**：插件注册了宿主工具 `session_group`（`list` / `propose` / `status`）。agent 只能**提建议**，不能自己改归属：除非该组已在白名单，否则工具只会把建议放进待确认队列。定时任务的 prompt 里写一句「跑完调 `session_group propose` 归到 X」即可，但最终仍由你在侧栏点一下。
+- **一键记住定时任务**：把某个定时任务建出来的会话手动挪进分组后，行内「⋯」会多出「记住：该定时任务归这里」，点一下就按任务 id 建规则。
+
 ## 安装
 
+Web（`http://127.0.0.1:3080`）：
+
 ```bash
+# npm
 dsh plugin --profile web add dsh-sidebar-sessions
-```
-
-装完重启 `dsh web`（已开着的话按 Ctrl+R 刷新页面）。
-
-不想用 npm 的话，也可以装 GitHub Release 里的 tarball：
-
-```bash
-dsh plugin --profile web add https://github.com/sss-1012/dsh-sidebar-sessions/releases/download/v0.1.3/dsh-sidebar-sessions-0.1.3.tgz
-```
-
-装完重启 `dsh web`（已开着的话按 Ctrl+R 刷新页面）。
-
-本地开发（符号链接，改代码即时生效）：
-
-```bash
+# GitHub Release 的 tarball
+dsh plugin --profile web add https://github.com/sss-1012/dsh-sidebar-sessions/releases/download/v0.2.0/dsh-sidebar-sessions-0.2.0.tgz
+# 本地开发（符号链接，改代码即时生效）
 dsh plugin --profile web add link:E:\Work\tools\dsh-sidebar-sessions
 ```
 
+桌面端（DeepSeek Harness Desktop，**独立 profile `desktop`**）：
+
+```bash
+dsh plugin --profile desktop add dsh-sidebar-sessions
+# 本地开发
+dsh plugin --profile desktop add link:E:\Work\tools\dsh-sidebar-sessions
+```
+
+> 桌面端的页面源是 `dsh-app://app`，它的 localStorage 与 `127.0.0.1:3080` **完全隔离**；v0.2.0 起分组状态存在宿主侧一份 JSON 里（见下），所以两端看到同一批分组。桌面壳会把同源相对路径的请求（`/dsh-sidebar-sessions/api/*`）原样转发给宿主 HTTP 服务，插件不需要额外桥接。
+
+装完**重启宿主**（`dsh web`；桌面端是退出应用再打开）。只刷新页面不够：宿主半边的路由是启动时注册的，v0.1.x 到 v0.2.0 必须重启一次。
+
 ## 开发
 
-无构建步骤：`lib/index.js` 是空的 host 半边，`lib/client.js` 是浏览器 bundle（`window.__ModuleLoader__.load` 格式，直接以 ESM 加载）。
+无构建步骤：`lib/index.js` 是宿主半边（HTTP 路由 + `session_group` 工具 + 可选模型兜底），`lib/rules.js` 是纯状态归约与规则匹配（无副作用，可单测），`lib/client.js` 是浏览器 bundle（`window.__ModuleLoader__.load` 格式，直接以 ESM 加载）。
 
 ```bash
 node --check lib/client.js
-node test/order.test.mjs
+node --check lib/index.js
+node test/order.test.mjs      # 拖动顺序
+node test/rules.test.mjs      # 规则匹配 / 许可状态 / 状态归约
+node test/host-api.test.mjs   # 路由 + 工具（真起一个临时 HTTP 服务）
 ```
 
 ## 数据与限制
-
-- 分组、折叠状态、隐藏工作区、当前工作区存在浏览器 `localStorage`（key `dsh-session-groups.v1`，兼容早期版本）；各视图的拖动顺序也存在同一个 key 的 `order` 字段里。
+- **状态文件**：`~/.dsh/sidebar-sessions/state.json`（可用 `DSH_SIDEBAR_SESSIONS_STATE` 覆盖路径）。里面是分组、归属、规则、待确认建议、白名单、折叠、视图顺序、隐藏工作区。每次读写都是「读盘 → 归约 → 原子写回」（写临时文件再 rename），两个窗口/两端同时开着也不会互相覆盖内存里的旧副本。
+- **迁移**：v0.1.x 的分组存在浏览器 `localStorage`（key `dsh-session-groups.v1`）。v0.2.0 第一次连上宿主时会自动把它导入一次（`imported: true` 后不再导入），旧 key 原样保留不动。
+- **安全**：插件路由不依赖宿主 cookie，自己把关——请求的 `Host` 必须是本机（防 DNS rebinding），写操作（POST）必须带插件标记头 `x-dsg-request: 1`（跨源页面加不上自定义头），并拒绝非本机 `Origin`。
 - 宿主拥有会话、置顶、归档、工作区与宿主顺序的最终状态；插件只做展示与写入调用。
-- **接管式**：`sidebar.workspaces` 是独占插槽，安装后官方 WorkspaceBrowser 不再渲染，其逐项能力由本插件自行实现。
-- 工作区「隐藏」是本地显示开关（DSH 0.2.1 客户端未暴露工作区归档 API），不是官方归档。
-- 工作区树里跨工作区拖动会被忽略（宿主只接受同一工作区内的移动）；平铺区（最近 / 分组等）的拖动只改本视图顺序，不会把会话搬进别的分组或工作区。
 
 ## License
 

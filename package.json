@@ -1,7 +1,7 @@
 {
   "name": "dsh-sidebar-sessions",
-  "version": "0.1.6",
-  "description": "Recent-first session sidebar for DeepSeek Harness: user groups, workspace tree, archive bucket, status dots, drag reorder and scheduled-task marks.",
+  "version": "0.2.0",
+  "description": "Recent-first session sidebar for DeepSeek Harness: user groups, workspace tree, archive bucket, status dots, drag reorder, host-backed auto-grouping with a consent prompt, and an agent tool to propose groups.",
   "type": "module",
   "main": "lib/index.js",
   "exports": {
@@ -31,8 +31,12 @@
     "sidebar",
     "sessions",
     "workspace",
-    "archive"
+    "archive",
+    "grouping"
   ],
+  "scripts": {
+    "test": "node test/order.test.mjs && node test/rules.test.mjs && node test/host-api.test.mjs"
+  },
   "engines": {
     "dsh": ">=0.2.1-rc.3 <0.3.0"
   },
